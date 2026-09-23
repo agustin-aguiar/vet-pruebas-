@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: owners
+    // Fields: firstName, lastName, documentId, phone, whatsapp, email, address, city, createdAt, notes, tags, status, preferredContact
+    //
+    // Collection: pets
+    // Fields: ownerId, name, photo, species, breed, sex, birthDate, weight, color, isSterilized, medicalAlerts, allergies, currentMedications, status, clinicalHistoryId
+    //
+    // Collection: appointments
+    // Fields: petId, ownerId, vetId, date, time, duration, type, status, reason, notes
+    //
+    // Collection: clinicalRecords
+    // Fields: petId, vetId, date, reason, symptoms, diagnosis, treatment, medication, instructions, type
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidOwner(data) {
+      return hasRequiredFields(['firstName', 'lastName', 'email']) &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 100 &&
+             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 100 &&
+             isValidEmail(data.email);
+    }
+
+    function isValidPet(data) {
+      return hasRequiredFields(['ownerId', 'name', 'species']) &&
+             data.ownerId is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.species in ['Dog', 'Cat', 'Exotic', 'Bird', 'Rabbit'];
+    }
+
+    function isValidAppointment(data) {
+      return hasRequiredFields(['petId', 'ownerId', 'date', 'time', 'type']) &&
+             data.petId is string &&
+             data.ownerId is string &&
+             data.type in ['Checkup', 'Vaccination', 'Surgery', 'Emergency', 'Control'];
+    }
+
+    function isValidClinicalRecord(data) {
+      return hasRequiredFields(['petId', 'date', 'reason', 'diagnosis']) &&
+             data.petId is string &&
+             data.reason is string && data.reason.size() > 0 &&
+             data.diagnosis is string && data.diagnosis.size() > 0;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /owners/{ownerId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidOwner(request.resource.data);
+      allow update: if isAuthenticated() && isValidOwner(request.resource.data);
+      allow delete: if isAuthenticated(); // In a real app, maybe only admins
+    }
+
+    match /pets/{petId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPet(request.resource.data);
+      allow update: if isAuthenticated() && isValidPet(request.resource.data);
+      allow delete: if isAuthenticated();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidAppointment(request.resource.data);
+      allow update: if isAuthenticated() && isValidAppointment(request.resource.data);
+      allow delete: if isAuthenticated();
+    }
+
+    match /clinicalRecords/{recordId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidClinicalRecord(request.resource.data);
+      allow update: if isAuthenticated() && isValidClinicalRecord(request.resource.data);
+      allow delete: if isAuthenticated();
+    }
+    
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+  }
+}

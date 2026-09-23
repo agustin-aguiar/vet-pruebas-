@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "Owner": {
+      "title": "Owner",
+      "description": "Information about a pet owner",
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "documentId": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["Active", "Inactive", "With Debt"] },
+        "preferredContact": { "type": "string", "enum": ["WhatsApp", "Email", "Phone"] }
+      },
+      "required": ["firstName", "lastName", "email"]
+    },
+    "Pet": {
+      "title": "Pet",
+      "description": "Information about a pet",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string" },
+        "name": { "type": "string" },
+        "photo": { "type": "string" },
+        "species": { "type": "string", "enum": ["Dog", "Cat", "Exotic", "Bird", "Rabbit"] },
+        "breed": { "type": "string" },
+        "sex": { "type": "string", "enum": ["Male", "Female"] },
+        "birthDate": { "type": "string", "format": "date" },
+        "weight": { "type": "number" },
+        "color": { "type": "string" },
+        "isSterilized": { "type": "boolean" },
+        "medicalAlerts": { "type": "array", "items": { "type": "string" } },
+        "allergies": { "type": "array", "items": { "type": "string" } },
+        "currentMedications": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["Active", "Inactive", "Deceased"] },
+        "clinicalHistoryId": { "type": "string" }
+      },
+      "required": ["ownerId", "name", "species"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Information about a veterinary appointment",
+      "type": "object",
+      "properties": {
+        "petId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "vetId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "duration": { "type": "number" },
+        "type": { "type": "string", "enum": ["Checkup", "Vaccination", "Surgery", "Emergency", "Control"] },
+        "status": { "type": "string", "enum": ["Scheduled", "Checked-in", "Attended", "Cancelled", "No-show"] },
+        "reason": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["petId", "ownerId", "date", "time", "type"]
+    },
+    "ClinicalRecord": {
+      "title": "ClinicalRecord",
+      "description": "Medical history entry for a pet",
+      "type": "object",
+      "properties": {
+        "petId": { "type": "string" },
+        "vetId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "reason": { "type": "string" },
+        "symptoms": { "type": "string" },
+        "diagnosis": { "type": "string" },
+        "treatment": { "type": "string" },
+        "medication": { "type": "string" },
+        "instructions": { "type": "string" },
+        "type": { "type": "string", "enum": ["General", "Control", "Vaccination", "Surgery", "Emergency"] }
+      },
+      "required": ["petId", "date", "reason", "diagnosis"]
+    }
+  },
+  "firestore": {
+    "/owners/{ownerId}": { "schema": "Owner", "description": "Collection of pet owners" },
+    "/pets/{petId}": { "schema": "Pet", "description": "Collection of pets" },
+    "/appointments/{appointmentId}": { "schema": "Appointment", "description": "Collection of appointments" },
+    "/clinicalRecords/{recordId}": { "schema": "ClinicalRecord", "description": "Collection of clinical records" }
+  }
+}
